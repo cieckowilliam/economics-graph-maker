@@ -6,9 +6,9 @@ from drafter import *
 set_website_title("Economics Graph Maker")
 set_site_information(
     author="William Ciecko",
-    description="Makes custom and acruate economics graphs based on the introduction to microeconomics ciriculum",
+    description="Makes custom and accurate economics graphs based on the introduction to microeconomics curriculum",
     sources="Thanks to the Drafter docs, my teacher, previous code, BlockPy, and matplotlib docs",
-    planning=["plan.pdf", "design.pdf"],
+    planning=["plan.pdf", "design.pdf", "feedback.pdf"],
     links=["https://github.com/cieckowilliam/ecomomics-graph-maker"])
 hide_debug_information()
 set_website_framed(False)
@@ -47,8 +47,8 @@ GRAPH_TYPES = ["Supply and Demand", "Tariff", "Negative Externality"]
 def draw_graph(state: State) -> None:
     """
     Description: Draws the graph of the current state onto matplotlib
-    by clearing the figure then ploting lines points and shaded areas based on the current state
-    Arguments: state(State): The current state which hold the graphs type and values
+    by clearing the figure, then plotting line points and shaded areas based on the current state
+    Arguments: state(State): The current state which holds the graph type and values
     Returns: None: draws onto matplotlib figure but does not return it
     """
     
@@ -231,9 +231,9 @@ def select_graph(state: State) -> Page:
 @route
 def save_type(state: State, graph_type: str) -> Page:
     """
-    Description: Saves the selected graph type to the state then shows the input page 
+    Description: Saves the selected graph type to the state, then shows the input page 
     Arguments: state(State): The current state that is being modified
-        graph_type: str: The grpah type th user selected
+        graph_type: str: The graph type the user selected
     Returns: Page: The page that is produced by enter_inputs
     """
     state.graph_type = graph_type
@@ -244,7 +244,7 @@ def enter_inputs(state: State) -> Page:
     """
     Description: Creates a page with text boxes to enter inputs for the graphs
     Gives every graph inputs for supply and demand slope and initial values
-    Conditianly assings secondary value inputs for more complex graphs
+    Conditionally assigns secondary value inputs for more complex graphs
     Arguments: state(State): The current state used for default text box values
     Returns: Page: A page with a make graph button that conditionally goes to
     save_inputs or save_extra_inputs based on the graph type
@@ -284,8 +284,8 @@ def save_inputs(state: State, title: str,
         initial_supply: float: initial point for supply curve
         initial_demand: float: initial point for demand curve
         market: str: the product market for which the graph represents
-        price: str: the measure of price (ex. $)
-        quantity : str: the measure of quantity  (ex. 1000 barrels of oil)
+        price: str: the measure of price (ex., $)
+        quantity: str: the measure of quantity  (ex., 1000 barrels of oil)
     Returns: Page: A page produced by show_graph
     """
     state.title = title
@@ -312,10 +312,10 @@ def save_extra_inputs(state: State, title: str,
         initial_supply: float: initial point for supply curve
         initial_demand: float: initial point for demand curve
         first_extra: float: world price or slope of MSC curve
-        second_extra: float: tariff price or inital point of MSC curve
+        second_extra: float: tariff price or initial point of MSC curve
         market: str: the product market for which the graph represents
-        price: str: the measure of price (ex. $)
-        quantity : str: the measure of quantity  (ex. 1000 barrels of oil)
+        price: str: the measure of price (ex., $)
+        quantity: str: the measure of quantity  (ex., 1000 barrels of oil)
     Returns: Page: A page produced by show_graph
     """
     state.title = title
@@ -334,10 +334,10 @@ def save_extra_inputs(state: State, title: str,
 @route
 def show_graph(state: State) -> Page:
     """
-    Description: Draws and displays current graph
+    Description: Draws and displays the current graph
     Arguments: state(State): The current state of the graph
-    Returns: Page: A page with the ploted graph and
-    buttons to save graphs view saved graphs and go home
+    Returns: Page: A page with the plotted graph and
+    buttons to save graphs, view saved graphs, and go home
     """
     draw_graph(state)
     return Page(state, [
@@ -366,8 +366,8 @@ def view_saved_graphs(state: State) -> Page:
     """
     Description: Creates a page listing titles of saved graphs 
     Arguments: state(State): The current state 
-    Returns: Page: A page with a home button SelectBox and open button featuring all the saved graphs
-    displays "No Saved Graphs" if there are none in the list
+    Returns: Page: A page with a home button, SelectBox, and open button featuring all the saved graphs
+    Displays "No Saved Graphs" if there are none in the list
     """
     if len(state.saved_graphs) == 0:
         return Page(state, [
