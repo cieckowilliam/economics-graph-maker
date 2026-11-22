@@ -6,7 +6,7 @@ from drafter import *
 set_website_title("Economics Graph Maker")
 set_site_information(
     author="William Ciecko",
-    description="Makes custom and accurate economics graphs based on the introduction to microeconomics curriculum",
+    description="Makes custom and acruate economics graphs based on the introduction to microeconomics ciriculum",
     sources="Thanks to the Drafter docs, my teacher, previous code, BlockPy, and matplotlib docs",
     planning=["plan.pdf", "design.pdf"],
     links=["https://github.com/cieckowilliam/ecomomics-graph-maker"])
@@ -23,6 +23,9 @@ class Graph:
     initial_demand: float
     first_extra: float
     second_extra: float
+    market: str
+    price: str
+    quantity: str
 
 @dataclass
 class State:
@@ -34,6 +37,9 @@ class State:
     initial_demand: float
     first_extra: float
     second_extra: float
+    market: str
+    price: str
+    quantity: str
     saved_graphs: list[Graph]
     
 GRAPH_TYPES = ["Supply and Demand", "Tariff", "Negative Externality"]
@@ -41,8 +47,8 @@ GRAPH_TYPES = ["Supply and Demand", "Tariff", "Negative Externality"]
 def draw_graph(state: State) -> None:
     """
     Description: Draws the graph of the current state onto matplotlib
-    by clearing the figure, then plotting lines, points, and shaded areas based on the current state
-    Arguments: state(State): The current state which holds the graph type and values
+    by clearing the figure then ploting lines points and shaded areas based on the current state
+    Arguments: state(State): The current state which hold the graphs type and values
     Returns: None: draws onto matplotlib figure but does not return it
     """
     
@@ -52,6 +58,10 @@ def draw_graph(state: State) -> None:
 
     initial_demand = state.initial_demand
     initial_supply = state.initial_supply
+    
+    market = state.market
+    price = state.price
+    quantity = state.quantity
     
     if state.graph_type == "Supply and Demand":
         equilibrium_quantity = (initial_supply - initial_demand) / (demand_slope - supply_slope)
@@ -79,9 +89,9 @@ def draw_graph(state: State) -> None:
                  label = "Producer Surplus")
         
         plt.legend(loc = "upper center")
-        plt.title("Market")
-        plt.xlabel("Quantity")
-        plt.ylabel("Price($)")
+        plt.title(market + " Market")
+        plt.xlabel("Quantity(" + quantity + ")")
+        plt.ylabel("Price(" + price + ")")
         plt.ylim(bottom = 0)
         plt.margins(0.025)
         
@@ -138,9 +148,9 @@ def draw_graph(state: State) -> None:
                  label = "Dead Weight Loss")
         
         plt.legend(loc = "upper right")
-        plt.title("Market")
-        plt.xlabel("Quantity")
-        plt.ylabel("Price($)")
+        plt.title(market + " Market")
+        plt.xlabel("Quantity(" + quantity + ")")
+        plt.ylabel("Price(" + price + ")")
         plt.ylim(bottom = 0)
         plt.ylim(top = initial_demand)
 
@@ -187,9 +197,9 @@ def draw_graph(state: State) -> None:
                  label = "Dead Weight Loss")
             
         plt.legend(loc = "upper center")
-        plt.title("Market")
-        plt.xlabel("Quantity")
-        plt.ylabel("Price($)")
+        plt.title(market + " Market")
+        plt.xlabel("Quantity(" + quantity + ")")
+        plt.ylabel("Price(" + price + ")")
         plt.ylim(bottom = 0)
 
 @route
@@ -221,9 +231,9 @@ def select_graph(state: State) -> Page:
 @route
 def save_type(state: State, graph_type: str) -> Page:
     """
-    Description: Saves the selected graph type to the state, then shows the input page 
+    Description: Saves the selected graph type to the state then shows the input page 
     Arguments: state(State): The current state that is being modified
-        graph_type: str: The graph type the user selected
+        graph_type: str: The grpah type th user selected
     Returns: Page: The page that is produced by enter_inputs
     """
     state.graph_type = graph_type
@@ -234,33 +244,37 @@ def enter_inputs(state: State) -> Page:
     """
     Description: Creates a page with text boxes to enter inputs for the graphs
     Gives every graph inputs for supply and demand slope and initial values
-    Conditionally assigns secondary value inputs for more complex graphs
+    Conditianly assings secondary value inputs for more complex graphs
     Arguments: state(State): The current state used for default text box values
     Returns: Page: A page with a make graph button that conditionally goes to
     save_inputs or save_extra_inputs based on the graph type
     """
     input_fields = [
         Header("Input Graph Information", 2),
-        "Title:", TextBox("title", state.title),
-        "Supply Slope:", TextBox("supply_slope", state.supply_slope),
-        "Demand Slope:", TextBox("demand_slope", state.demand_slope),
-        "Initial Supply:", TextBox("initial_supply", state.initial_supply),
-        "Initial Demand:", TextBox("initial_demand", state.initial_demand),]
+        "Title:", TextBox("title", state.title), LineBreak(),
+        "Supply Slope:", TextBox("supply_slope", state.supply_slope), LineBreak(),
+        "Demand Slope:", TextBox("demand_slope", state.demand_slope), LineBreak(),
+        "Initial Supply:", TextBox("initial_supply", state.initial_supply), LineBreak(),
+        "Initial Demand:", TextBox("initial_demand", state.initial_demand), LineBreak(),
+        "Market:", TextBox("market", state.market), LineBreak(),
+        "Unit Price:", TextBox("price", state.price), LineBreak(),
+        "Unit Quantity:", TextBox("quantity", state.quantity), LineBreak()]
     
     if state.graph_type == "Tariff":
-        input_fields += ["World Price", TextBox("first_extra", state.first_extra),
-                         "Tariff Price", TextBox("second_extra", state.second_extra)]
+        input_fields += ["World Price", TextBox("first_extra", state.first_extra), LineBreak(),
+                         "Tariff Price", TextBox("second_extra", state.second_extra), LineBreak()]
         return Page(state, input_fields + [Button("Make Graph", save_extra_inputs)])
     
     if state.graph_type == "Negative Externality":
-        input_fields += ["MSC Slope", TextBox("first_extra", state.first_extra),
-                         "MSC Intercept", TextBox("second_extra", state.second_extra)]
+        input_fields += ["MSC Slope", TextBox("first_extra", state.first_extra,), LineBreak(),
+                         "MSC Intercept", TextBox("second_extra", state.second_extra), LineBreak()]
         return Page(state, input_fields + [Button("Make Graph", save_extra_inputs)])
-    return Page(state, input_fields + [Button("Make Graph", save_inputs)])
+    return Page(state, input_fields + [Button("Make Graph", save_inputs), Button("Home", index)])
     
 @route
 def save_inputs(state: State, title: str,
-                supply_slope: float, demand_slope: float, initial_supply: float, initial_demand: float) -> Page:
+                supply_slope: float, demand_slope: float, initial_supply: float, initial_demand: float,
+                market: str, price: str, quantity: str) -> Page:
     """
     Description: Saves basic graph inputs to the state and shows the graph
     Arguments: state(State): The current state which is being modified
@@ -269,6 +283,9 @@ def save_inputs(state: State, title: str,
         demand_slope: float: demand curve slope
         initial_supply: float: initial point for supply curve
         initial_demand: float: initial point for demand curve
+        market: str: the product market for which the graph represents
+        price: str: the measure of price (ex. $)
+        quantity : str: the measure of quantity  (ex. 1000 barrels of oil)
     Returns: Page: A page produced by show_graph
     """
     state.title = title
@@ -276,12 +293,16 @@ def save_inputs(state: State, title: str,
     state.demand_slope = demand_slope
     state.initial_supply = initial_supply
     state.initial_demand = initial_demand
+    state.market = market
+    state.price = price
+    state.quantity = quantity
     return show_graph(state)
 
 @route
 def save_extra_inputs(state: State, title: str,
                       supply_slope: float, demand_slope: float, initial_supply: float, initial_demand: float,
-                      first_extra: float, second_extra: float) -> Page:
+                      first_extra: float, second_extra: float,
+                      market: str, price: str, quantity: str) -> Page:
     """
     Description: Saves more complex graph inputs to the state and shows the graph
     Arguments: state(State): The current state which is being modified
@@ -291,7 +312,10 @@ def save_extra_inputs(state: State, title: str,
         initial_supply: float: initial point for supply curve
         initial_demand: float: initial point for demand curve
         first_extra: float: world price or slope of MSC curve
-        second_extra: float: tariff price or initial point of MSC curve
+        second_extra: float: tariff price or inital point of MSC curve
+        market: str: the product market for which the graph represents
+        price: str: the measure of price (ex. $)
+        quantity : str: the measure of quantity  (ex. 1000 barrels of oil)
     Returns: Page: A page produced by show_graph
     """
     state.title = title
@@ -301,21 +325,24 @@ def save_extra_inputs(state: State, title: str,
     state.initial_demand = initial_demand
     state.first_extra = first_extra
     state.second_extra = second_extra
+    state.market = market
+    state.price = price
+    state.quantity = quantity
     return show_graph(state)
 
     
 @route
 def show_graph(state: State) -> Page:
     """
-    Description: Draws and displays the current graph
+    Description: Draws and displays current graph
     Arguments: state(State): The current state of the graph
-    Returns: Page: A page with the plotted graph and
-    buttons to save graphs, view saved graphs, and go home
+    Returns: Page: A page with the ploted graph and
+    buttons to save graphs view saved graphs and go home
     """
     draw_graph(state)
     return Page(state, [
         Header(state.title, 2),
-        MatPlotLibPlot(),
+        MatPlotLibPlot(), LineBreak(),
         Button("Save Graph", save_graph),
         Button("Saved Graphs", view_saved_graphs),
         Button("Home", index)])
@@ -323,13 +350,14 @@ def show_graph(state: State) -> Page:
 @route
 def save_graph(state: State) -> Page:
     """
-    Description: Adds the current graph to the list of saved graphs
+    Description: Adds current graph to list of saved graphs
     Arguments: state(State): The current state of the graph
     Returns: Page: A page produced by view_saved_graphs
     """
     new_graph = Graph(state.title, state.graph_type,
                       state.supply_slope, state.demand_slope, state.initial_supply, state.initial_demand,
-                      state.first_extra, state.second_extra)
+                      state.first_extra, state.second_extra,
+                      state.market, state.price, state.quantity)
     state.saved_graphs.append(new_graph)
     return view_saved_graphs(state)
 
@@ -338,8 +366,8 @@ def view_saved_graphs(state: State) -> Page:
     """
     Description: Creates a page listing titles of saved graphs 
     Arguments: state(State): The current state 
-    Returns: Page: A page with a home button, SelectBox, and open button featuring all the saved graphs
-    Displays "No Saved Graphs" if there are none in the list
+    Returns: Page: A page with a home button SelectBox and open button featuring all the saved graphs
+    displays "No Saved Graphs" if there are none in the list
     """
     if len(state.saved_graphs) == 0:
         return Page(state, [
@@ -375,98 +403,108 @@ def open_saved_graphs(state: State, choice: str) -> Page:
             state.initial_demand = graph.initial_demand
             state.first_extra = graph.first_extra
             state.second_extra = graph.second_extra
+            state.market = graph.market
+            state.price = graph.price
+            state.quantity = graph.quantity
     return show_graph(state)
 
-assert_equal(draw_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, [])), None)
+assert_equal(draw_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", [])), None)
 
-assert_equal(index(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, [])),
-             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, []), [
+assert_equal(index(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", [])),
+             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []), [
                  Header("Economics Graph Maker", 1),
                  Button("Start", select_graph),
                  Button("Saved Graphs", view_saved_graphs)]))
 
-assert_equal(select_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, [])),
-             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, []), [
+assert_equal(select_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", [])),
+             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []), [
                  Header("Select Graph Type", 2),
                  "Graph Type:",
                  SelectBox("graph_type", GRAPH_TYPES, "Supply and Demand"),
                  Button("Next", save_type),
                  Button("Home", index)]))
 
-assert_equal(save_type(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, []), "Tariff"),
-             Page(State("My Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, []), [
+assert_equal(save_type(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", []), "Tariff"),
+             Page(State("My Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", []), [
                  Header("Input Graph Information", 2),
-                 "Title:", TextBox("title", "My Graph"),
-                 "Supply Slope:", TextBox("supply_slope", 1.0),
-                 "Demand Slope:", TextBox("demand_slope", -1.0),
-                 "Initial Supply:", TextBox("initial_supply", 2.0),
-                 "Initial Demand:", TextBox("initial_demand", 20.0),
-                 "World Price", TextBox("first_extra", 5.0),
-                 "Tariff Price", TextBox("second_extra", 8.0),
+                 "Title:", TextBox("title", "My Graph"), LineBreak(),
+                 "Supply Slope:", TextBox("supply_slope", 1.0), LineBreak(),
+                 "Demand Slope:", TextBox("demand_slope", -1.0), LineBreak(),
+                 "Initial Supply:", TextBox("initial_supply", 2.0), LineBreak(),
+                 "Initial Demand:", TextBox("initial_demand", 20.0), LineBreak(),
+                 "Market:", TextBox("market", "Gas"), LineBreak(),
+                 "Unit Price:", TextBox("price", "$"), LineBreak(), 
+                 "Unit Quantity:", TextBox("quantity", "gallons"), LineBreak(),
+                 "World Price", TextBox("first_extra", 5.0), LineBreak(),
+                 "Tariff Price", TextBox("second_extra", 8.0), LineBreak(),
                  Button("Make Graph", save_extra_inputs)]))
 
-assert_equal(enter_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, [])),
-             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, []), [
+assert_equal(enter_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", [])),
+             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", []), [
                  Header("Input Graph Information", 2),
-                 "Title:", TextBox("title", "My Graph"),
-                 "Supply Slope:", TextBox("supply_slope", 1.0),
-                 "Demand Slope:", TextBox("demand_slope", -1.0),
-                 "Initial Supply:", TextBox("initial_supply", 2.0),
-                 "Initial Demand:", TextBox("initial_demand", 20.0),
-                 Button("Make Graph", save_inputs)]))
+                 "Title:", TextBox("title", "My Graph"), LineBreak(),
+                 "Supply Slope:", TextBox("supply_slope", 1.0), LineBreak(),
+                 "Demand Slope:", TextBox("demand_slope", -1.0), LineBreak(),
+                 "Initial Supply:", TextBox("initial_supply", 2.0), LineBreak(),
+                 "Initial Demand:", TextBox("initial_demand", 20.0), LineBreak(),
+                 "Market:", TextBox("market", "Gas"), LineBreak(), 
+                 "Unit Price:", TextBox("price", "$"), LineBreak(),
+                 "Unit Quantity:", TextBox("quantity", "gallons"), LineBreak(),
+                 Button("Make Graph", save_inputs),
+                 Button("Home", index)]))
 
-assert_equal(save_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, []),
-                         "New Graph", 2.0, -3.0, 1.0, 30.0),
-             Page(State("New Graph", "Supply and Demand", 2.0, -3.0, 1.0, 30.0, 0.0, 0.0, []), [
+assert_equal(save_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []),
+                         "New Graph", 2.0, -3.0, 1.0, 30.0, "Gas", "$", "gallons"),
+             Page(State("New Graph", "Supply and Demand", 2.0, -3.0, 1.0, 30.0, 0.0, 0.0, "Gas", "$", "gallons", []), [
                  Header("New Graph", 2),
-                 MatPlotLibPlot(),
+                 MatPlotLibPlot(), LineBreak(),
                  Button("Save Graph", save_graph),
                  Button("Saved Graphs", view_saved_graphs),
                  Button("Home", index)]))
 
-assert_equal(save_extra_inputs(State("My Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, []),
-                         "New Graph", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0),
-             Page(State("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, []), [
+assert_equal(save_extra_inputs(State("My Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []),
+                         "New Graph", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons"),
+             Page(State("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", []), [
                  Header("New Graph", 2),
-                 MatPlotLibPlot(),
+                 MatPlotLibPlot(), LineBreak(),
                  Button("Save Graph", save_graph),
                  Button("Saved Graphs", view_saved_graphs),
                  Button("Home", index)]))
 
-assert_equal(show_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, [])),
-             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, []), [
+assert_equal(show_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", [])),
+             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []), [
                  Header("My Graph", 2),
-                 MatPlotLibPlot(),
+                 MatPlotLibPlot(), LineBreak(),
                  Button("Save Graph", save_graph),
                  Button("Saved Graphs", view_saved_graphs),
                  Button("Home", index)]))
 
-assert_equal(save_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, [])),
-             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0,
-                        [Graph("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0)]), [
+assert_equal(save_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", [])),
+             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons",
+                        [Graph("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons")]), [
                  Header("Saved Graphs", 2),
                  SelectBox("choice", ["My Graph"], "My Graph"),
                  Button("Open", open_saved_graphs),
                  Button("Home", index)]))
 
-assert_equal(view_saved_graphs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0,
-                              [Graph("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0)])),
-             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0,
-                        [Graph("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0)]), [
+assert_equal(view_saved_graphs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons",
+                              [Graph("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons")])),
+             Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons",
+                        [Graph("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons")]), [
                  Header("Saved Graphs", 2),
                  SelectBox("choice", ["My Graph"], "My Graph"),
                  Button("Open", open_saved_graphs),
                  Button("Home", index)]))
 
-assert_equal(open_saved_graphs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0,
-                              [Graph("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0)]),
+assert_equal(open_saved_graphs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons",
+                              [Graph("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons")]),
                                "New Graph"),
-             Page(State("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0,
-                        [Graph("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0)]), [
+             Page(State("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons",
+                        [Graph("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons")]), [
                  Header("New Graph", 2),
-                 MatPlotLibPlot(),
+                 MatPlotLibPlot(), LineBreak(),
                  Button("Save Graph", save_graph),
                  Button("Saved Graphs", view_saved_graphs),
                  Button("Home", index)]))
 
-start_server(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, []))
+start_server(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []))
