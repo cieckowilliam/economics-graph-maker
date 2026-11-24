@@ -9,7 +9,7 @@ set_site_information(
     description="Makes custom and accurate economics graphs based on the introduction to microeconomics curriculum",
     sources="Thanks to the Drafter docs, my teacher, previous code, BlockPy, and matplotlib docs",
     planning=["plan.pdf", "design.pdf", "feedback.pdf"],
-    links=["https://github.com/cieckowilliam/ecomomics-graph-maker"])
+    links=["https://github.com/cieckowilliam/economics-graph-maker"])
 hide_debug_information()
 set_website_framed(False)
 
@@ -201,6 +201,42 @@ def draw_graph(state: State) -> None:
         plt.xlabel("Quantity(" + quantity + ")")
         plt.ylabel("Price(" + price + ")")
         plt.ylim(bottom = 0)
+        
+def is_number(number: str) -> bool:
+    """
+    Description: Determines whether a string input is a number
+    Arguments: str: A user input of string type that should be a number
+    Returns: bool: whether or not the string is a number
+    """
+    if not number:
+        return False
+    if number == ".":
+        return False
+    if number == "-":
+        return False
+    
+    value = ""
+    if number[0] == "-":
+        value = number[1:]
+    else:
+        value = number
+        
+    parts = value.split(".")
+    
+    if len(parts) > 2:
+        return False
+    else:
+        for part in parts:
+            numbers_only = True
+            for character in part:
+                if character in "0123456789":
+                    numbers_only = numbers_only and True
+                else:
+                    numbers_only = numbers_only and False
+        if numbers_only == False:
+            return False
+        else:
+            return True
 
 @route
 def index(state: State) -> Page:
@@ -263,72 +299,140 @@ def enter_inputs(state: State) -> Page:
     if state.graph_type == "Tariff":
         input_fields += ["World Price", TextBox("first_extra", state.first_extra), LineBreak(),
                          "Tariff Price", TextBox("second_extra", state.second_extra), LineBreak()]
-        return Page(state, input_fields + [Button("Make Graph", save_extra_inputs)])
+        return Page(state, input_fields + [Button("Make Graph", save_extra_inputs), Button("Home", index)])
     
     if state.graph_type == "Negative Externality":
         input_fields += ["MSC Slope", TextBox("first_extra", state.first_extra,), LineBreak(),
                          "MSC Intercept", TextBox("second_extra", state.second_extra), LineBreak()]
-        return Page(state, input_fields + [Button("Make Graph", save_extra_inputs)])
+        return Page(state, input_fields + [Button("Make Graph", save_extra_inputs), Button("Home", index)])
     return Page(state, input_fields + [Button("Make Graph", save_inputs), Button("Home", index)])
     
 @route
 def save_inputs(state: State, title: str,
-                supply_slope: float, demand_slope: float, initial_supply: float, initial_demand: float,
+                supply_slope: str, demand_slope: str, initial_supply: str, initial_demand: str,
                 market: str, price: str, quantity: str) -> Page:
     """
     Description: Saves basic graph inputs to the state and shows the graph
     Arguments: state(State): The current state which is being modified
         title: str: graph title
-        supply_slope: float: supply curve slope
-        demand_slope: float: demand curve slope
-        initial_supply: float: initial point for supply curve
-        initial_demand: float: initial point for demand curve
+        supply_slope: str: supply curve slope
+        demand_slope: str: demand curve slope
+        initial_supply: str: initial point for supply curve
+        initial_demand: str: initial point for demand curve
         market: str: the product market for which the graph represents
         price: str: the measure of price (ex., $)
         quantity: str: the measure of quantity  (ex., 1000 barrels of oil)
     Returns: Page: A page produced by show_graph
     """
-    state.title = title
-    state.supply_slope = supply_slope
-    state.demand_slope = demand_slope
-    state.initial_supply = initial_supply
-    state.initial_demand = initial_demand
-    state.market = market
-    state.price = price
-    state.quantity = quantity
-    return show_graph(state)
-
+    if len(title) > 50:
+        return Page(state, ["Input Length Error: title length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif len(market) > 25:
+        return Page(state, ["Input Length Error: market length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif len(price) > 25:
+        return Page(state, ["Input Length Error: price length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif len(quantity) > 25:
+        return Page(state, ["Input Length Error: quantity length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(supply_slope):
+        return Page(state, ["Input Type Error: supply slope must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(demand_slope):
+        return Page(state, ["Input Type Error: demand slope must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(initial_supply):
+        return Page(state, ["Input Type Error: initial supply must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(initial_demand):
+        return Page(state, ["Input Type Error: initial demand must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif float(supply_slope) <= 0:
+        return Page(state, ["Slope Error: supply slope must be positive", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif float(demand_slope) >= 0:
+        return Page(state, ["Slope Error: demand slope must be negative", LineBreak(),
+                            Button("Back", enter_inputs)])
+    else:
+        state.title = title
+        state.supply_slope = float(supply_slope)
+        state.demand_slope = float(demand_slope)
+        state.initial_supply = float(initial_supply)
+        state.initial_demand = float(initial_demand)
+        state.market = market
+        state.price = price
+        state.quantity = quantity
+        return show_graph(state)
+    
 @route
 def save_extra_inputs(state: State, title: str,
-                      supply_slope: float, demand_slope: float, initial_supply: float, initial_demand: float,
-                      first_extra: float, second_extra: float,
+                      supply_slope: str, demand_slope: str, initial_supply: str, initial_demand: str,
+                      first_extra: str, second_extra: str,
                       market: str, price: str, quantity: str) -> Page:
     """
     Description: Saves more complex graph inputs to the state and shows the graph
     Arguments: state(State): The current state which is being modified
         title: str: graph title
-        supply_slope: float: supply curve slope
-        demand_slope: float: demand curve slope
-        initial_supply: float: initial point for supply curve
-        initial_demand: float: initial point for demand curve
-        first_extra: float: world price or slope of MSC curve
-        second_extra: float: tariff price or initial point of MSC curve
+        supply_slope: str: supply curve slope
+        demand_slope: str: demand curve slope
+        initial_supply: str: initial point for supply curve
+        initial_demand: str: initial point for demand curve
+        first_extra: str: world price or slope of MSC curve
+        second_extra: str: tariff price or initial point of MSC curve
         market: str: the product market for which the graph represents
         price: str: the measure of price (ex., $)
         quantity: str: the measure of quantity  (ex., 1000 barrels of oil)
     Returns: Page: A page produced by show_graph
     """
-    state.title = title
-    state.supply_slope = supply_slope
-    state.demand_slope = demand_slope
-    state.initial_supply = initial_supply
-    state.initial_demand = initial_demand
-    state.first_extra = first_extra
-    state.second_extra = second_extra
-    state.market = market
-    state.price = price
-    state.quantity = quantity
-    return show_graph(state)
+    if len(title) > 50:
+        return Page(state, ["Input Length Error: title length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif len(market) > 25:
+        return Page(state, ["Input Length Error: market length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif len(price) > 25:
+        return Page(state, ["Input Length Error: price length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif len(quantity) > 25:
+        return Page(state, ["Input Length Error: quantity length too long", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(supply_slope):
+        return Page(state, ["Input Type Error: supply slope must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(demand_slope):
+        return Page(state, ["Input Type Error: demand slope must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(initial_supply):
+        return Page(state, ["Input Type Error: initial supply must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(initial_demand):
+        return Page(state, ["Input Type Error: initial demand must be a number", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(first_extra):
+        return Page(state, ["Input Type Error", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif not is_number(second_extra):
+        return Page(state, ["Input Type Error", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif float(supply_slope) <= 0:
+        return Page(state, ["Slope Error: supply slope must be positive", LineBreak(),
+                            Button("Back", enter_inputs)])
+    elif float(demand_slope) >= 0:
+        return Page(state, ["Slope Error: demand slope must be negative", LineBreak(),
+                            Button("Back", enter_inputs)])
+    else:
+        state.title = title
+        state.supply_slope = float(supply_slope)
+        state.demand_slope = float(demand_slope)
+        state.initial_supply = float(initial_supply)
+        state.initial_demand = float(initial_demand)
+        state.first_extra = float(first_extra)
+        state.second_extra = float(second_extra)
+        state.market = market
+        state.price = price
+        state.quantity = quantity
+        return show_graph(state)
 
     
 @route
@@ -410,6 +514,17 @@ def open_saved_graphs(state: State, choice: str) -> Page:
 
 assert_equal(draw_graph(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", [])), None)
 
+assert_equal(is_number("1.0"), True)
+assert_equal(is_number("1"), True)
+assert_equal(is_number("2.a"), False)
+assert_equal(is_number("-1"), True)
+assert_equal(is_number("-1.3"), True)
+assert_equal(is_number("-a"), False)
+assert_equal(is_number("z.z"), False)
+assert_equal(is_number(""), False)
+assert_equal(is_number("."), False)
+assert_equal(is_number("-"), False)
+
 assert_equal(index(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", [])),
              Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []), [
                  Header("Economics Graph Maker", 1),
@@ -437,7 +552,8 @@ assert_equal(save_type(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20
                  "Unit Quantity:", TextBox("quantity", "gallons"), LineBreak(),
                  "World Price", TextBox("first_extra", 5.0), LineBreak(),
                  "Tariff Price", TextBox("second_extra", 8.0), LineBreak(),
-                 Button("Make Graph", save_extra_inputs)]))
+                 Button("Make Graph", save_extra_inputs),
+                 Button("Home", index)]))
 
 assert_equal(enter_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", [])),
              Page(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", []), [
@@ -454,7 +570,7 @@ assert_equal(enter_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0,
                  Button("Home", index)]))
 
 assert_equal(save_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []),
-                         "New Graph", 2.0, -3.0, 1.0, 30.0, "Gas", "$", "gallons"),
+                         "New Graph", "2.0", "-3.0", "1.0", "30.0", "Gas", "$", "gallons"),
              Page(State("New Graph", "Supply and Demand", 2.0, -3.0, 1.0, 30.0, 0.0, 0.0, "Gas", "$", "gallons", []), [
                  Header("New Graph", 2),
                  MatPlotLibPlot(), LineBreak(),
@@ -463,7 +579,7 @@ assert_equal(save_inputs(State("My Graph", "Supply and Demand", 1.0, -1.0, 2.0, 
                  Button("Home", index)]))
 
 assert_equal(save_extra_inputs(State("My Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 0.0, 0.0, "Gas", "$", "gallons", []),
-                         "New Graph", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons"),
+                         "New Graph", "1.0", "-1.0", "2.0", "20.0", "5.0", "8.0", "Gas", "$", "gallons"),
              Page(State("New Graph", "Tariff", 1.0, -1.0, 2.0, 20.0, 5.0, 8.0, "Gas", "$", "gallons", []), [
                  Header("New Graph", 2),
                  MatPlotLibPlot(), LineBreak(),
